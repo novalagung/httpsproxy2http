@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  app:
+    container_name: app
+    build: .
+    restart: always
+    environment: 
+      - HOST=httpsproxy2http.novalagung.com
+      - REDIS=redis
+      - ENV=production
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - storage-app:/etc/letsencrypt/live
+    depends_on: 
+      - redis
+
+  redis:
+    image: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: always
+    environment: 
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - storage-redis:/data
+
+volumes:
+  storage-app:
+  storage-redis:
