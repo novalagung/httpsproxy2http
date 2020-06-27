@@ -1,4 +1,4 @@
-# httpsproxy2http - Quick HTTPS reverse proxy for your HTTP web service
+# httpsproxy2http - Quick HTTPS reverse/forward proxy for your HTTP web service
 
 When your site is running with HTTPS enabled, and tried to embed an URL or perform an API call towards external URL which is HTTP (not HTTPS), you will see the error in below:
 

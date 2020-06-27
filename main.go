@@ -120,12 +120,13 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var destinationHost string
-	if strings.HasPrefix(parts[0], "http") {
-		destinationHost = fmt.Sprintf("%s://%s", parts[0], strings.Join(parts[1:], "/"))
-	} else {
-		destinationHost = fmt.Sprintf("http://%s", rPath)
+	isForwardProxy := true
+	if parts[0] == "forward" {
+		isForwardProxy = true
+	} else if parts[0] == "reverse" {
+		isForwardProxy = false
 	}
+	destinationHost := fmt.Sprintf("http://%s", rPath)
 
 	destinationURL, err := url.Parse(destinationHost)
 	if err != nil {
@@ -136,7 +137,10 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	reverseProxy := new(httputil.ReverseProxy)
 	reverseProxy.Director = func(dr *http.Request) {
-		dr.Host = destinationURL.Host
+		if isForwardProxy {
+			dr.Host = destinationURL.Host
+		}
+
 		dr.URL = destinationURL
 		dr.Header = r.Header
 		dr.Body = r.Body
