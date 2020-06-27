@@ -18,6 +18,9 @@ import (
 
 var cachedViewTempalte *template.Template
 
+const proxyTypeForward = "forward"
+const proxyTypeReverse = "reverse"
+
 func main() {
 	r := chi.NewRouter()
 
@@ -112,9 +115,7 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proxyType := parts[0]
-	isForwardProxy, destinationURLString := constructDestination(rPath, r.Header.Get("Referer"))
-
+	proxyType, destinationURLString := constructDestination(rPath, r.Header.Get("Referer"))
 	destinationURL, err := url.Parse(destinationURLString)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -128,7 +129,7 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	reverseProxy := new(httputil.ReverseProxy)
 	reverseProxy.Director = func(dr *http.Request) {
-		if isForwardProxy {
+		if proxyType == proxyTypeReverse {
 			dr.Host = destinationURL.Host
 		}
 
@@ -136,35 +137,37 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		dr.Body = r.Body
 		dr.Header = r.Header
 	}
+	reverseProxy.ModifyResponse = func(r *http.Response) error {
+		if proxyType == proxyTypeReverse {
+			r.StatusCode = http.StatusTemporaryRedirect
+		}
+		return nil
+	}
 
 	reverseProxy.ServeHTTP(w, r)
 }
 
-func parseURL(path string) (bool, string) {
+func parseURL(path string) (string, string) {
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	proxyType := parts[0]
-	isForwardProxy := true
 	destinationURLString := ""
 
-	if proxyType == "forward" {
-		isForwardProxy = true
+	if proxyType == proxyTypeReverse {
 		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
-	} else if proxyType == "reverse" {
-		isForwardProxy = false
+	} else if proxyType == proxyTypeForward {
 		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
 	} else {
-		proxyType = "forward"
-		isForwardProxy = true
+		proxyType = proxyTypeForward
 		destinationURLString = fmt.Sprintf("http://%s", path)
 	}
 
-	return isForwardProxy, destinationURLString
+	return proxyType, destinationURLString
 }
 
-func constructDestination(path, referer string) (bool, string) {
-	isForwardProxy, destinationURLString := parseURL(path)
+func constructDestination(path, referer string) (string, string) {
+	proxyType, destinationURLString := parseURL(path)
 	if referer == "" {
-		return isForwardProxy, destinationURLString
+		return proxyType, destinationURLString
 	}
 
 	appHost := strings.TrimSpace(os.Getenv("HOST"))
@@ -180,7 +183,7 @@ func constructDestination(path, referer string) (bool, string) {
 		destinationURLString = refererURL.Scheme + "://" + refererURL.Host + "/" + destinationPath
 	}
 
-	return isForwardProxy, destinationURLString
+	return proxyType, destinationURLString
 }
 
 func constructPathWithQueryString(u *url.URL) string {

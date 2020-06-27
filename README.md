@@ -21,6 +21,8 @@ https://httpsproxy2http.novalagung.com/your-webservice-api.com/v2/some/endpoint?
 
 In summary, use the https://httpsproxy2http.novalagung.com as the host of your destination URL, and put your actual URL as path next to it.
 
+All resources like request headers, request body, query strings, cookies, etc; all of them will also be proxified. So it's safe to use httpsproxy2http on RESTful operations.
+
 ## Disclaimer
 
 We do not store any of your data. Use at your own risk. For better security, We recommend to setup the httpsproxy2http on your own cloud.
