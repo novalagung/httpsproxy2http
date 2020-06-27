@@ -17,6 +17,7 @@ import (
 )
 
 var cachedViewTempalte *template.Template
+var defaultProxyTypeIsForwardProxy = true
 
 func main() {
 	r := chi.NewRouter()
@@ -120,26 +121,41 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isForwardProxy := true
-	if parts[0] == "forward" {
+	proxyType := parts[0]
+	isForwardProxy := defaultProxyTypeIsForwardProxy
+	destinationHost := ""
+	if proxyType == "forward" {
 		isForwardProxy = true
-	} else if parts[0] == "reverse" {
+		destinationHost = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+	} else if proxyType == "reverse" {
 		isForwardProxy = false
+		destinationHost = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+	} else {
+		if defaultProxyTypeIsForwardProxy {
+			proxyType = "forward"
+		} else {
+			proxyType = "reverse"
+		}
+		destinationHost = fmt.Sprintf("http://%s", rPath)
 	}
-	destinationHost := fmt.Sprintf("http://%s", rPath)
 
 	destinationURL, err := url.Parse(destinationHost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println("incoming request from", r.RemoteAddr, "to", destinationURL.String())
+
+	logString := fmt.Sprintf("incoming request from %s to %s", r.RemoteAddr, destinationURL.String())
+	if proxyType != "" {
+		logString = fmt.Sprintf("%s (type: %s proxy)", logString, proxyType)
+	}
 
 	reverseProxy := new(httputil.ReverseProxy)
 	reverseProxy.Director = func(dr *http.Request) {
 		if isForwardProxy {
 			dr.Host = destinationURL.Host
 		}
+		log.Println("dr.Host", dr.Host)
 
 		dr.URL = destinationURL
 		dr.Header = r.Header

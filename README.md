@@ -23,18 +23,23 @@ In summary, use the https://httpsproxy2http.novalagung.com as the host of your d
 
 ## Disclaimer
 
-We do not store any of your data. Use at your own risk. It's recommended to host httpsproxy2http on your own cloud.
+We do not store any of your data. Use at your own risk. For better security, We recommend to host the httpsproxy2http on your own cloud.
 
 ## Usage
 
 ```bash
+# default forward proxy
 https://httpsproxy2http.novalagung.com/<your-url>
 https://httpsproxy2http.novalagung.com/your-webservice-api.com/v2/some/endpoint?param=1
+
+# with explicity proxy type (forward/reverse)
+https://httpsproxy2http.novalagung.com/forward/<your-url>
+https://httpsproxy2http.novalagung.com/forward/your-webservice-api.com/v2/some/endpoint?param=1
+https://httpsproxy2http.novalagung.com/service/<your-url>
+https://httpsproxy2http.novalagung.com/service/your-webservice-api.com/v2/some/endpoint?param=1
 ```
 
 ## Install in your own cloud
-
-It's possible to setup httpsproxy2http to your own cloud.
 
 ```bash
 # clone our repo
@@ -43,13 +48,14 @@ git clone https://github.com/novalagung/httpsproxy2http.git
 # go to the project directory
 cd httpsproxy2http
 
-# open docker-compose.yaml, adjust the HOST environment variable
+# open docker-compose.yaml
+# then adjust the HOST environment variable
 
 # start the app
 docker-compose up -d
 ```
 
-You don't have to worry about setting up the HTTPS etc, we cover that for you.
+You don't have to worry about setting up the SSL etc, we cover all of that for you.
 
 ## License
 
