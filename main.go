@@ -44,19 +44,6 @@ func isEnvProduction() bool {
 	return env == "prod" || env == "production"
 }
 
-func startDevelopmentWebServer(r http.Handler) {
-	serverHTTP := new(http.Server)
-	serverHTTP.Handler = r
-	serverHTTP.Addr = ":http"
-
-	log.Println("starting web server in development mode")
-
-	err := serverHTTP.ListenAndServe()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-}
-
 func startProductionWebServer(r http.Handler) {
 	host := os.Getenv("HOST")
 	if host == "" {
@@ -80,6 +67,19 @@ func startProductionWebServer(r http.Handler) {
 	serverHTTPS.Addr = ":https"
 	serverHTTPS.TLSConfig = &tls.Config{GetCertificate: certManager.GetCertificate}
 	err := serverHTTPS.ListenAndServeTLS("", "")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
+
+func startDevelopmentWebServer(r http.Handler) {
+	serverHTTP := new(http.Server)
+	serverHTTP.Handler = r
+	serverHTTP.Addr = ":http"
+
+	log.Println("starting web server in development mode")
+
+	err := serverHTTP.ListenAndServe()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
