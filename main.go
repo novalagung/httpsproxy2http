@@ -132,13 +132,12 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		if proxyType == proxyTypeReverse {
 			dr.Host = destinationURL.Host
 		}
-
 		dr.URL = destinationURL
 		dr.Body = r.Body
 		dr.Header = r.Header
 	}
 	reverseProxy.ModifyResponse = func(r *http.Response) error {
-		if proxyType == proxyTypeReverse {
+		if proxyType == proxyTypeForward {
 			r.StatusCode = http.StatusTemporaryRedirect
 		}
 		return nil
@@ -153,9 +152,9 @@ func parseURL(path string) (string, string) {
 	destinationURLString := ""
 
 	if proxyType == proxyTypeReverse {
-		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+		destinationURLString = fmt.Sprintf("http://%s", strings.Join(parts[1:], "/"))
 	} else if proxyType == proxyTypeForward {
-		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+		destinationURLString = fmt.Sprintf("http://%s", strings.Join(parts[1:], "/"))
 	} else {
 		proxyType = proxyTypeForward
 		destinationURLString = fmt.Sprintf("http://%s", path)
