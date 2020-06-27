@@ -1,4 +1,4 @@
-# httpsproxy2http - Quick HTTPS reverse/forward proxy for your HTTP web service
+# httpsproxy2http - Quick HTTPS forward/reverse proxy for your HTTP web service
 
 When your site is running with HTTPS enabled, and tried to embed an URL or perform an API call towards external URL which is HTTP (not HTTPS), you will see the error in below:
 
@@ -23,7 +23,7 @@ In summary, use the https://httpsproxy2http.novalagung.com as the host of your d
 
 ## Disclaimer
 
-We do not store any of your data. Use at your own risk. For better security, We recommend to host the httpsproxy2http on your own cloud.
+We do not store any of your data. Use at your own risk. For better security, We recommend to setup the httpsproxy2http on your own cloud.
 
 ## Usage
 
@@ -35,11 +35,11 @@ https://httpsproxy2http.novalagung.com/your-webservice-api.com/v2/some/endpoint?
 # with explicity proxy type (forward/reverse)
 https://httpsproxy2http.novalagung.com/forward/<your-url>
 https://httpsproxy2http.novalagung.com/forward/your-webservice-api.com/v2/some/endpoint?param=1
-https://httpsproxy2http.novalagung.com/service/<your-url>
-https://httpsproxy2http.novalagung.com/service/your-webservice-api.com/v2/some/endpoint?param=1
+https://httpsproxy2http.novalagung.com/reverse/<your-url>
+https://httpsproxy2http.novalagung.com/reverse/your-webservice-api.com/v2/some/endpoint?param=1
 ```
 
-## Install in your own cloud
+## Setup httpsproxy2http in your own cloud
 
 ```bash
 # clone our repo
