@@ -26,7 +26,7 @@ func main() {
 		AllowedMethods:   []string{"HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Debug:            true,
+		Debug:            !isEnvProduction(),
 	}).Handler)
 
 	r.Handle("/*", http.HandlerFunc(reverseProxyHandler))
