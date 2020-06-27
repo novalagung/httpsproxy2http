@@ -30,7 +30,7 @@ func main() {
 	}).Handler)
 
 	r.Handle("/*", http.HandlerFunc(reverseProxyHandler))
-	r.Handle("/.well-known/acme-challenge/", http.FileServer(http.FileSystem(http.Dir("./assets"))))
+	r.Handle("/.well-known/acme-challenge/", http.FileServer(http.FileSystem(http.Dir("etc/letsencrypt/assets"))))
 
 	if isEnvProduction() {
 		startProductionWebServer(r)
