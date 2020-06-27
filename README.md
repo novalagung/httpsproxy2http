@@ -39,6 +39,8 @@ https://httpsproxy2http.novalagung.com/reverse/<your-url>
 https://httpsproxy2http.novalagung.com/reverse/your-webservice-api.com/v2/some/endpoint?param=1
 ```
 
+Forward proxy is the default when the type is not explicitly set
+
 ## Setup httpsproxy2http in your own cloud
 
 ```bash

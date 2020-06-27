@@ -116,15 +116,18 @@
                 <p><b>{{ .host }}</b>/your-webservice-api.com/v2/some/endpoint?param=1</p>
             </blockquote>
 
-            <p>With explicity proxy type (forward/reverse):</p>
+            <p>With explicitly proxy type (forward/reverse):</p>
             <blockquote class="info">
                 <p><b>{{ .host }}/forward</b>/&lt;your-url&gt;</p>
                 <p><b>{{ .host }}/forward</b>/your-webservice-api.com/v2/some/endpoint?param=1</p>
             </blockquote>
+
             <blockquote class="info">
                 <p><b>{{ .host }}/reverse</b>/&lt;your-url&gt;</p>
                 <p><b>{{ .host }}/reverse</b>/your-webservice-api.com/v2/some/endpoint?param=1</p>
             </blockquote>
+
+            <p>Forward proxy is the default when the type is not explicitly set</p>
             
             <hr>
 

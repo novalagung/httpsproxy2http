@@ -17,7 +17,6 @@ import (
 )
 
 var cachedViewTempalte *template.Template
-var defaultProxyTypeIsForwardProxy = true
 
 func main() {
 	r := chi.NewRouter()
@@ -87,15 +86,7 @@ func startDevelopmentWebServer(r http.Handler) {
 }
 
 func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
-	rPath := strings.Trim(r.URL.Path, "/")
-
-	for query := range r.URL.Query() {
-		if !strings.Contains(rPath, "?") {
-			rPath = fmt.Sprintf("%s?%s=%s", rPath, query, r.URL.Query().Get(query))
-		} else {
-			rPath = fmt.Sprintf("%s&%s=%s", rPath, query, r.URL.Query().Get(query))
-		}
-	}
+	rPath := constructPathWithQueryString(r.URL)
 	if rPath == "" || rPath == "/" {
 		scheme := "http://"
 		if isEnvProduction() {
@@ -122,24 +113,9 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxyType := parts[0]
-	isForwardProxy := defaultProxyTypeIsForwardProxy
-	destinationHost := ""
-	if proxyType == "forward" {
-		isForwardProxy = true
-		destinationHost = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
-	} else if proxyType == "reverse" {
-		isForwardProxy = false
-		destinationHost = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
-	} else {
-		if defaultProxyTypeIsForwardProxy {
-			proxyType = "forward"
-		} else {
-			proxyType = "reverse"
-		}
-		destinationHost = fmt.Sprintf("http://%s", rPath)
-	}
+	isForwardProxy, destinationURLString := constructDestination(rPath, r.Header.Get("Referer"))
 
-	destinationURL, err := url.Parse(destinationHost)
+	destinationURL, err := url.Parse(destinationURLString)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -155,12 +131,68 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 		if isForwardProxy {
 			dr.Host = destinationURL.Host
 		}
-		log.Println("dr.Host", dr.Host)
 
 		dr.URL = destinationURL
-		dr.Header = r.Header
 		dr.Body = r.Body
+		dr.Header = r.Header
 	}
 
 	reverseProxy.ServeHTTP(w, r)
+}
+
+func parseURL(path string) (bool, string) {
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	proxyType := parts[0]
+	isForwardProxy := true
+	destinationURLString := ""
+
+	if proxyType == "forward" {
+		isForwardProxy = true
+		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+	} else if proxyType == "reverse" {
+		isForwardProxy = false
+		destinationURLString = fmt.Sprintf("https://%s", strings.Join(parts[1:], "/"))
+	} else {
+		proxyType = "forward"
+		isForwardProxy = true
+		destinationURLString = fmt.Sprintf("http://%s", path)
+	}
+
+	return isForwardProxy, destinationURLString
+}
+
+func constructDestination(path, referer string) (bool, string) {
+	isForwardProxy, destinationURLString := parseURL(path)
+	if referer == "" {
+		return isForwardProxy, destinationURLString
+	}
+
+	appHost := strings.TrimSpace(os.Getenv("HOST"))
+	refererURL, _ := url.Parse(referer)
+
+	if appHost == refererURL.Host {
+		_, referer = parseURL(constructPathWithQueryString(refererURL))
+		refererURL, _ := url.Parse(referer)
+
+		destinationURL, _ := url.Parse(path)
+		destinationPath := constructPathWithQueryString(destinationURL)
+
+		destinationURLString = refererURL.Scheme + "://" + refererURL.Host + "/" + destinationPath
+	}
+
+	return isForwardProxy, destinationURLString
+}
+
+func constructPathWithQueryString(u *url.URL) string {
+	path := strings.Trim(u.Path, "/")
+
+	for query := range u.Query() {
+		if !strings.Contains(path, "?") {
+			path = fmt.Sprintf("%s?%s=%s", path, query, u.Query().Get(query))
+		} else {
+			path = fmt.Sprintf("%s&%s=%s", path, query, u.Query().Get(query))
+		}
+	}
+
+	return path
 }
