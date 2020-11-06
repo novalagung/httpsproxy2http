@@ -190,11 +190,13 @@ func constructPathWithQueryString(u *url.URL) string {
 
 	for query := range u.Query() {
 		if !strings.Contains(path, "?") {
-			path = fmt.Sprintf("%s?%s=%s", path, query, u.Query().Get(query))
+			path = fmt.Sprintf("%s?%s=%s", path, query, url.QueryEscape(u.Query().Get(query)))
 		} else {
-			path = fmt.Sprintf("%s&%s=%s", path, query, u.Query().Get(query))
+			path = fmt.Sprintf("%s&%s=%s", path, query, url.QueryEscape(u.Query().Get(query)))
 		}
 	}
+
+	log.Println("=================", path)
 
 	return path
 }
