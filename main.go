@@ -60,19 +60,22 @@ func startProductionWebServer(r http.Handler) {
 
 	log.Println("starting web server")
 
-	serverHTTP := new(http.Server)
-	serverHTTP.Handler = certManager.HTTPHandler(nil)
-	serverHTTP.Addr = ":http"
-	go serverHTTP.ListenAndServe()
+	go func() {
+		serverHTTP := new(http.Server)
+		serverHTTP.Handler = certManager.HTTPHandler(nil)
+		serverHTTP.Addr = ":http"
+		log.Fatal(serverHTTP.ListenAndServe())
+	}()
 
-	serverHTTPS := new(http.Server)
-	serverHTTPS.Handler = r
-	serverHTTPS.Addr = ":https"
-	serverHTTPS.TLSConfig = &tls.Config{GetCertificate: certManager.GetCertificate}
-	err := serverHTTPS.ListenAndServeTLS("", "")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	go func() {
+		serverHTTPS := new(http.Server)
+		serverHTTPS.Handler = r
+		serverHTTPS.Addr = ":https"
+		serverHTTPS.TLSConfig = &tls.Config{GetCertificate: certManager.GetCertificate}
+		log.Fatal(serverHTTPS.ListenAndServeTLS("", ""))
+	}()
+
+	select {}
 }
 
 func startDevelopmentWebServer(r http.Handler) {
