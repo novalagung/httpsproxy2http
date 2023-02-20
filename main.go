@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
@@ -48,20 +47,6 @@ func isEnvProduction() bool {
 }
 
 func startProductionWebServer(r http.Handler) {
-	host := os.Getenv("HOST")
-	if host == "" {
-		log.Fatal("env var HOST must not be empty")
-	}
-	email := os.Getenv("EMAIL")
-	if email == "" {
-		log.Fatal("env var EMAIL must not be empty")
-	}
-	certManager := autocert.Manager{
-		Email:      email,
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(host),
-		Cache:      autocert.DirCache(fmt.Sprintf("/etc/letsencrypt/live/%s/", host)),
-	}
 
 	log.Println("starting web server")
 
@@ -73,10 +58,29 @@ func startProductionWebServer(r http.Handler) {
 	}()
 
 	go func() {
+		host := os.Getenv("HOST")
+		if host == "" {
+			log.Fatal("env var HOST must not be empty")
+		}
+		log.Println("host:", host)
+
+		email := os.Getenv("EMAIL")
+		if email == "" {
+			log.Fatal("env var EMAIL must not be empty")
+		}
+		log.Println("email:", email)
+
+		certManager := autocert.Manager{
+			Cache:      autocert.DirCache(fmt.Sprintf("/etc/letsencrypt/live/%s/", host)),
+			Prompt:     autocert.AcceptTOS,
+			Email:      email,
+			HostPolicy: autocert.HostWhitelist(host),
+		}
+
 		serverHTTPS := new(http.Server)
 		serverHTTPS.Handler = r
 		serverHTTPS.Addr = ":https"
-		serverHTTPS.TLSConfig = &tls.Config{GetCertificate: certManager.GetCertificate}
+		serverHTTPS.TLSConfig = certManager.TLSConfig()
 		log.Fatal(serverHTTPS.ListenAndServeTLS("", ""))
 	}()
 
@@ -134,6 +138,7 @@ func reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
 	if proxyType != "" {
 		logString = fmt.Sprintf("%s (type: %s proxy)", logString, proxyType)
 	}
+	log.Println(logString)
 
 	reverseProxy := new(httputil.ReverseProxy)
 	reverseProxy.Director = func(dr *http.Request) {
