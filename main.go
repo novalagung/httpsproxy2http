@@ -47,42 +47,41 @@ func isEnvProduction() bool {
 }
 
 func startProductionWebServer(r http.Handler) {
+	host := os.Getenv("HOST")
+	if host == "" {
+		log.Fatal("env var HOST must not be empty")
+	}
+	log.Println("host:", host)
+
+	email := os.Getenv("EMAIL")
+	if email == "" {
+		log.Fatal("env var EMAIL must not be empty")
+	}
+	log.Println("email:", email)
+
+	certManager := autocert.Manager{
+		Cache:      autocert.DirCache(fmt.Sprintf("/etc/letsencrypt/live/%s/", host)),
+		Prompt:     autocert.AcceptTOS,
+		Email:      email,
+		HostPolicy: autocert.HostWhitelist(host),
+	}
 
 	log.Println("starting web server")
 
-	go func() {
+	go func(certManager autocert.Manager) {
 		serverHTTP := new(http.Server)
 		serverHTTP.Handler = certManager.HTTPHandler(nil)
 		serverHTTP.Addr = ":http"
 		log.Fatal(serverHTTP.ListenAndServe())
-	}()
+	}(certManager)
 
-	go func() {
-		host := os.Getenv("HOST")
-		if host == "" {
-			log.Fatal("env var HOST must not be empty")
-		}
-		log.Println("host:", host)
-
-		email := os.Getenv("EMAIL")
-		if email == "" {
-			log.Fatal("env var EMAIL must not be empty")
-		}
-		log.Println("email:", email)
-
-		certManager := autocert.Manager{
-			Cache:      autocert.DirCache(fmt.Sprintf("/etc/letsencrypt/live/%s/", host)),
-			Prompt:     autocert.AcceptTOS,
-			Email:      email,
-			HostPolicy: autocert.HostWhitelist(host),
-		}
-
+	go func(certManager autocert.Manager) {
 		serverHTTPS := new(http.Server)
 		serverHTTPS.Handler = r
 		serverHTTPS.Addr = ":https"
 		serverHTTPS.TLSConfig = certManager.TLSConfig()
 		log.Fatal(serverHTTPS.ListenAndServeTLS("", ""))
-	}()
+	}(certManager)
 
 	select {}
 }
