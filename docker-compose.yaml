@@ -6,6 +6,7 @@ services:
     restart: always
     environment: 
       - HOST=httpsproxy2http.novalagung.com
+      - EMAIL=caknopal@gmail.com
       - ENV=production
     ports:
       - "80:80"
