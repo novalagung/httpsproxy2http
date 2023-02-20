@@ -52,7 +52,12 @@ func startProductionWebServer(r http.Handler) {
 	if host == "" {
 		log.Fatal("env var HOST must not be empty")
 	}
+	email := os.Getenv("EMAIL")
+	if email == "" {
+		log.Fatal("env var EMAIL must not be empty")
+	}
 	certManager := autocert.Manager{
+		Email:      email,
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(host),
 		Cache:      autocert.DirCache(fmt.Sprintf("/etc/letsencrypt/live/%s/", host)),
@@ -198,8 +203,6 @@ func constructPathWithQueryString(u *url.URL) string {
 			path = fmt.Sprintf("%s&%s=%s", path, query, url.QueryEscape(u.Query().Get(query)))
 		}
 	}
-
-	log.Println("=================", path)
 
 	return path
 }
